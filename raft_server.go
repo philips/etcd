@@ -12,6 +12,8 @@ import (
 	"github.com/coreos/go-raft"
 )
 
+fix bug
+
 var raftTransporter transporter
 var raftServer *raft.Server
 
