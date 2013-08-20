@@ -20,7 +20,7 @@ func commandName(name string) string {
 
 // A command represents an action to be taken on the replicated state machine.
 type Command interface {
-	CommandName() string
+	Name() string
 	Apply(server *raft.Server) (interface{}, error)
 }
 
@@ -32,7 +32,7 @@ type SetCommand struct {
 }
 
 // The name of the set command in the log
-func (c *SetCommand) CommandName() string {
+func (c *SetCommand) Name() string {
 	return commandName("set")
 }
 
@@ -50,7 +50,7 @@ type TestAndSetCommand struct {
 }
 
 // The name of the testAndSet command in the log
-func (c *TestAndSetCommand) CommandName() string {
+func (c *TestAndSetCommand) Name() string {
 	return commandName("testAndSet")
 }
 
@@ -65,7 +65,7 @@ type GetCommand struct {
 }
 
 // The name of the get command in the log
-func (c *GetCommand) CommandName() string {
+func (c *GetCommand) Name() string {
 	return commandName("get")
 }
 
@@ -80,7 +80,7 @@ type DeleteCommand struct {
 }
 
 // The name of the delete command in the log
-func (c *DeleteCommand) CommandName() string {
+func (c *DeleteCommand) Name() string {
 	return commandName("delete")
 }
 
@@ -96,7 +96,7 @@ type WatchCommand struct {
 }
 
 // The name of the watch command in the log
-func (c *WatchCommand) CommandName() string {
+func (c *WatchCommand) Name() string {
 	return commandName("watch")
 }
 
@@ -120,7 +120,7 @@ func (c *WatchCommand) Apply(server *raft.Server) (interface{}, error) {
 // JoinCommand
 type JoinCommand struct {
 	RaftVersion string `json:"raftVersion"`
-	Name        string `json:"name"`
+	machineName string `json:"name"`
 	RaftURL     string `json:"raftURL"`
 	EtcdURL     string `json:"etcdURL"`
 }
@@ -128,14 +128,14 @@ type JoinCommand struct {
 func newJoinCommand() *JoinCommand {
 	return &JoinCommand{
 		RaftVersion: r.version,
-		Name:        r.name,
+		machineName: r.name,
 		RaftURL:     r.url,
 		EtcdURL:     e.url,
 	}
 }
 
 // The name of the join command in the log
-func (c *JoinCommand) CommandName() string {
+func (c *JoinCommand) Name() string {
 	return commandName("join")
 }
 
@@ -143,7 +143,7 @@ func (c *JoinCommand) CommandName() string {
 func (c *JoinCommand) Apply(raftServer *raft.Server) (interface{}, error) {
 
 	// check if the join command is from a previous machine, who lost all its previous log.
-	response, _ := etcdStore.RawGet(path.Join("_etcd/machines", c.Name))
+	response, _ := etcdStore.RawGet(path.Join("_etcd/machines", c.machineName))
 
 	b := make([]byte, 8)
 	binary.PutUvarint(b, raftServer.CommitIndex())
@@ -155,34 +155,34 @@ func (c *JoinCommand) Apply(raftServer *raft.Server) (interface{}, error) {
 	// check machine number in the cluster
 	num := machineNum()
 	if num == maxClusterSize {
-		debug("Reject join request from ", c.Name)
+		debug("Reject join request from ", c.machineName)
 		return []byte{0}, etcdErr.NewError(103, "")
 	}
 
-	addNameToURL(c.Name, c.RaftVersion, c.RaftURL, c.EtcdURL)
+	addNameToURL(c.machineName, c.RaftVersion, c.RaftURL, c.EtcdURL)
 
 	// add peer in raft
-	err := raftServer.AddPeer(c.Name, "")
+	err := raftServer.AddPeer(c.machineName, "")
 
 	// add machine in etcd storage
-	key := path.Join("_etcd/machines", c.Name)
+	key := path.Join("_etcd/machines", c.machineName)
 	value := fmt.Sprintf("raft=%s&etcd=%s&raftVersion=%s", c.RaftURL, c.EtcdURL, c.RaftVersion)
 	etcdStore.Set(key, value, time.Unix(0, 0), raftServer.CommitIndex())
 
 	return b, err
 }
 
-func (c *JoinCommand) NodeName() string {
-	return c.Name
+func (c *JoinCommand) MachineName() string {
+	return c.machineName
 }
 
 // RemoveCommand
 type RemoveCommand struct {
-	Name string `json:"name"`
+	name string `json:"name"`
 }
 
 // The name of the remove command in the log
-func (c *RemoveCommand) CommandName() string {
+func (c *RemoveCommand) Name() string {
 	return commandName("remove")
 }
 
@@ -190,7 +190,7 @@ func (c *RemoveCommand) CommandName() string {
 func (c *RemoveCommand) Apply(raftServer *raft.Server) (interface{}, error) {
 
 	// remove machine in etcd storage
-	key := path.Join("_etcd/machines", c.Name)
+	key := path.Join("_etcd/machines", c.name)
 
 	_, err := etcdStore.Delete(key, raftServer.CommitIndex())
 
@@ -199,13 +199,13 @@ func (c *RemoveCommand) Apply(raftServer *raft.Server) (interface{}, error) {
 	}
 
 	// remove peer in raft
-	err = raftServer.RemovePeer(c.Name)
+	err = raftServer.RemovePeer(c.name)
 
 	if err != nil {
 		return []byte{0}, err
 	}
 
-	if c.Name == raftServer.Name() {
+	if c.name == raftServer.Name() {
 		// the removed node is this node
 
 		// if the node is not replaying the previous logs
