@@ -109,14 +109,20 @@ func sanitizeURL(host string, defaultScheme string) string {
 // sanitizeListenHost cleans up the ListenHost parameter and appends a port
 // if necessary based on the advertised port.
 func sanitizeListenHost(listen string, advertised string) string {
+
 	aurl, err := url.Parse(advertised)
 	if err != nil {
 		fatal(err)
 	}
 
-	_, aport, err := net.SplitHostPort(aurl.Host)
+	ahost, aport, err := net.SplitHostPort(aurl.Host)
 	if err != nil {
 		fatal(err)
+	}
+
+	// If listen host isn't set default to the advertised host
+	if listen == "" {
+		listen = ahost
 	}
 
 	return net.JoinHostPort(listen, aport)
