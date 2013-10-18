@@ -123,7 +123,7 @@ func (s *Server) installV2() {
 
 func (s *Server) installMod() {
 	r := s.Handler.(*mux.Router)
-	r.Handle("/etcd/mod", mod.HttpHandler())
+	r.PathPrefix("/etcd/mod").Handler(http.StripPrefix("/etcd/mod", mod.HttpHandler()))
 }
 
 // Adds a v1 server handler to the router.

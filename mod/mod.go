@@ -12,6 +12,7 @@ var ServeMux *http.Handler
 
 func HttpHandler() (handler http.Handler) {
 	modMux := mux.NewRouter()
-	modMux.Handle("/dashboard", dashboard.HttpHandler())
+	modMux.PathPrefix("/dashboard/").
+		Handler(http.StripPrefix("/dashboard/", dashboard.HttpHandler()))
 	return modMux
 }
