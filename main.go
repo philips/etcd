@@ -38,6 +38,9 @@ var (
 	dir       = flag.String("data-dir", "", "Path to the data directory")
 	snapCount = flag.Int64("snapshot-count", etcdserver.DefaultSnapCount, "Number of committed transactions to trigger a snapshot")
 
+	verbose     = flag.Bool("v", false, "Verbose logging")
+	veryVerbose = flag.Bool("vv", false, "Verbose logging")
+
 	peers     = &etcdhttp.Peers{}
 	addrs     = &Addrs{}
 	cors      = &CORSInfo{}
