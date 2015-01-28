@@ -1,0 +1,29 @@
+
+
+# Setup a watcher and a setter on a while loop
+
+./bin/etcdctl -o extended watch currentTime
+./bin/etcdctl -o extended set "`date`"
+
+# Full down/up demo
+
+etcd can survive a full/up down of all of the members of the cluster
+
+# Add a member- infra4
+
+Add the member:
+etcdctl member add infra4 http://localhost:7004
+
+List the member:
+etcdctl member list
+
+Remove the member - show that it stops running
+etcdctl member remove ID
+
+Try restarting the member - show that it fails to avoid split brains
+
+# Try to add an unknown member- infra7
+
+Note the loglines on the cluster and on the infra7
+
+# Backup/restore
