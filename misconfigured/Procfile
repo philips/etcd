@@ -1,0 +1,2 @@
+# Use goreman to run `go get github.com/mattn/goreman`
+etcd1: ../bin/etcd -name infra7 -listen-client-urls http://localhost:4007 -advertise-client-urls http://localhost:4007 -listen-peer-urls http://localhost:7007 -initial-advertise-peer-urls http://localhost:7007 -initial-cluster-token etcd-cluster-1 -initial-cluster 'infra1=http://localhost:7001,infra2=http://localhost:7002,infra7=http://localhost:7007' -initial-cluster-state new
