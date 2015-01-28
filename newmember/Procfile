@@ -1,0 +1,2 @@
+# Use goreman to run `go get github.com/mattn/goreman`
+etcd4: ../bin/etcd -name infra4 -listen-client-urls http://localhost:4004 -advertise-client-urls http://localhost:4004 -listen-peer-urls http://localhost:7004 -initial-advertise-peer-urls http://localhost:7004
