@@ -1,5 +1,3 @@
-
-
 # Setup a watcher and a setter on a while loop
 
 ./bin/etcdctl -o extended watch currentTime
@@ -12,13 +10,13 @@ etcd can survive a full/up down of all of the members of the cluster
 # Add a member- infra4
 
 Add the member:
-etcdctl member add infra4 http://localhost:7004
+./bin/etcdctl member add infra4 http://localhost:7004
 
 List the member:
-etcdctl member list
+./bin/etcdctl member list
 
 Remove the member - show that it stops running
-etcdctl member remove ID
+./bin/etcdctl member remove ID
 
 Try restarting the member - show that it fails to avoid split brains
 
@@ -27,3 +25,7 @@ Try restarting the member - show that it fails to avoid split brains
 Note the loglines on the cluster and on the infra7
 
 # Backup/restore
+
+./bin/etcdctl backup --data-dir infra1.etcd/ --backup-dir restore/recovery.etcd
+
+Show that if I restart the cluster the old member get rejected.
